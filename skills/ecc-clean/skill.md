@@ -1,86 +1,56 @@
 # /ecc-clean - ECC コンポーネントクリーンアップ
 
-不要な ECC コンポーネントを削除し、コンテキストを軽量に保つ。
+**プロジェクトの `.claude/`** から ECC コンポーネントを削除し、コンテキストを軽量に保つ。
+グローバルのフェーズ管理コマンドには触れない。
 
 ## 実行手順
 
-### ステップ1: 現在の ECC コンポーネントを一覧取得
+### 1. 現在のコンポーネントを一覧取得
 
-グローバル（`~/.claude/agents/ecc-*`, `~/.claude/skills/ecc-*`）とプロジェクト固有（`.claude/agents/ecc-*`, `.claude/skills/ecc-*`）の両方を確認し、現在導入済みのコンポーネントを一覧する。
+`.claude/agents/ecc-*`, `.claude/skills/ecc-*`, `.claude/rules/ecc-*`, `.claude/contexts/ecc-*` を確認。
+何もなければ「ECC コンポーネントはありません」と報告して終了。
 
-### ステップ2: フェーズ選択
+### 2. 削除方法の選択
 
-ユーザーに AskUserQuestion で質問する:
+AskUserQuestion:
 
-**「現在のフェーズを選択してください（選択したフェーズのコンポーネントだけ残し、他は削除します）」**
+**「どのように削除しますか？」**
+- `全削除` — プロジェクト内の ecc-* を全て削除
+- `フェーズ指定` — 残すフェーズを選んでそれ以外を削除
+- `個別選択` — 削除するものを個別に選択
 
-選択肢:
-- `design` - 設計・企画
-- `spec` - 仕様確定
-- `implement` - 実装
-- `test` - テスト
-- `review` - レビュー・リリース準備
-- `deploy` - デプロイ
-- Other → ステップ2b へ
+### 3. フェーズ指定の場合
 
-選択されたフェーズに属するコンポーネント + 常駐コンポーネントだけを残し、それ以外の ECC コンポーネントを全て削除する。
+AskUserQuestion (multiSelect: true):
 
-### ステップ2b: カスタム削除（Other 選択時）
+**「残すフェーズを選んでください」**
+- plan, code, test, review, docs, research, learn, content, ops
 
-AskUserQuestion（multiSelect: true）で質問する:
+### 4. フェーズ別コンポーネントマッピング
 
-**「削除するフェーズを選択してください」**
+**plan:** agents: planner, architect / skills: deep-research, market-research
+**code:** agents: tdd-guide, build-error-resolver, docs-lookup / skills: coding-standards, tdd-workflow, verification-loop, frontend-patterns, backend-patterns, docker-patterns + 言語別全て / rules: common/*, 言語別 / contexts: dev.md
+**test:** agents: e2e-runner / skills: e2e-testing, eval-harness, ai-regression-testing
+**review:** agents: code-reviewer, security-reviewer, refactor-cleaner, doc-updater / skills: security-review, security-scan / contexts: review.md
+**docs:** agents: docs-lookup, doc-updater / skills: codebase-onboarding, documentation-lookup
+**research:** skills: deep-research, exa-search, market-research / contexts: research.md
+**learn:** skills: continuous-learning, continuous-learning-v2, strategic-compact, context-budget, iterative-retrieval
+**content:** skills: article-writing, content-engine, crosspost, fal-ai-media, video-editing, frontend-slides, x-api, investor-materials, investor-outreach
+**ops:** agents: chief-of-staff, loop-operator, harness-optimizer / skills: deployment-patterns, docker-patterns, dmux-workflows, autonomous-loops
 
-選択肢:
-- `design` のコンポーネント
-- `spec` のコンポーネント
-- `implement` のコンポーネント
-- `test` のコンポーネント
-- `review` のコンポーネント
-- `deploy` のコンポーネント
+複数フェーズに属するコンポーネントは、選択されたフェーズに含まれていれば残す。
 
-選択されたフェーズのコンポーネントのみ削除する。
+### 5. 確認と実行
 
-### ステップ3: 削除対象の特定
+削除対象をテーブル表示し、ユーザー確認後に削除:
+```bash
+rm -rf ".claude/skills/ecc-<name>"
+rm -f ".claude/agents/ecc-<name>.md"
+rm -f ".claude/rules/ecc-<name>.md"
+rm -rf ".claude/rules/ecc-<name>"
+rm -f ".claude/contexts/ecc-<name>.md"
+```
 
-フェーズ別コンポーネントマッピング:
+### 6. 結果報告
 
-**design:**
-- agent: `planner.md`, `architect.md`
-- skill: `market-research/`, `deep-research/`
-
-**spec:**
-- agent: `database-reviewer.md`
-- skill: `postgres-patterns/`, `database-migrations/`, `backend-patterns/`
-
-**implement:**
-- skill: `frontend-patterns/`, `docker-patterns/`, `tdd-workflow/`, `verification-loop/`, `backend-patterns/`
-- agent: `tdd-guide.md`, `build-error-resolver.md`
-- 言語別スキル・エージェント（`typescript-reviewer`, `rust-reviewer`, `rust-build-resolver`, `rust-patterns/`, `rust-testing/`, `golang-*`, `python-*`, `springboot-*`, `kotlin-*`, `django-*`, `laravel-*`, `cpp-*`, `flutter-*` 等）
-
-**test:**
-- agent: `e2e-runner.md`
-- skill: `e2e-testing/`, `eval-harness/`, `ai-regression-testing/`
-
-**review:**
-- agent: `code-reviewer.md`, `security-reviewer.md`, `refactor-cleaner.md`, `doc-updater.md`
-- skill: `security-review/`, `security-scan/`
-
-**deploy:**
-- skill: `deployment-patterns/`, `docker-patterns/`
-
-**常駐（常に残す、どのフェーズでも削除しない）:**
-- skill: `coding-standards/`, `continuous-learning-v2/`
-- agent: `docs-lookup.md`
-
-注意: 複数フェーズに属するコンポーネント（例: `backend-patterns/` は spec と implement 両方、`docker-patterns/` は implement と deploy 両方）は、選択されたフェーズに含まれていれば残す。
-
-### ステップ4: 確認と実行
-
-削除対象のコンポーネント一覧をテーブルで表示し、ユーザーの確認を取ってから削除する。
-
-削除はグローバルとプロジェクト固有の両方で行う（存在する方を削除）。
-
-### ステップ5: 結果報告
-
-削除したコンポーネントと、残っているコンポーネントの一覧を表示する。
+削除したコンポーネントと残っているコンポーネントの一覧を表示。

@@ -1,67 +1,43 @@
-# /ecc-review - ECC レビュー・リリース準備フェーズ導入
+# /ecc-review - ECC レビュー・品質フェーズ
 
-コード品質・セキュリティの最終確認段階で必要な ECC コンポーネントをプロジェクトに導入する。
+コード品質・セキュリティの確認に必要な ECC コンポーネントをプロジェクトの `.claude/` に配置する。
+ECC モジュール: `security` 相当 / コンテキスト: `review.md` / フックレベル推奨: `strict`
 
-## 前提条件
+## 前提
 
-- `/ecc-setup` が実行済みであること
-- 未セットアップの場合は `/ecc-setup` の実行を促す
+`S:\ECC\everything-claude-code` が存在すること。なければ `/ecc-setup` を案内。
+鮮度チェック（30日超 → 警告、7日超 → 情報表示）。
 
-## 実行手順
+## 自動配置
 
-### ステップ0: ECC 鮮度チェック
-
-ECC クローン先の親ディレクトリ（デフォルト `~/.ecc/`）にある `ecc-state.json` を読み、最終 pull からの経過日数を確認する。
-
-- **30日以上**: 警告を表示し `/ecc-setup` の実行を推奨する
-- **7日以上**: 情報として経過日数を表示する
-- **7日未満**: 何も表示しない
-- `ecc-state.json` が存在しない場合は `/ecc-setup` が未実行なので、先に実行するよう促して中断する
-
-### ステップ1: 技術スタックの確認
-
-プロジェクトの技術スタックを確認する（package.json, *.csproj, go.mod, requirements.txt 等）。
-スタックに無関係な言語固有コンポーネントは除外する。
-
-### ステップ2: 既存コンポーネントの確認
-
-`~/.claude/skills/`, `~/.claude/agents/`, `.claude/skills/`, `.claude/agents/` を確認し、既に導入済みのものはスキップする。
-
-### ステップ3: 導入候補の提示
-
-以下の review フェーズ用コンポーネントから、未導入のものを提示する:
-
-| 種別 | コンポーネント | 用途 |
-|------|---------------|------|
+| 種別 | 名前 | 用途 |
+|------|------|------|
 | agent | `code-reviewer.md` | コード品質レビュー |
 | agent | `security-reviewer.md` | セキュリティ脆弱性レビュー |
-| agent | `refactor-cleaner.md` | デッドコード除去・リファクタ |
-| agent | `doc-updater.md` | ドキュメント同期 |
 | skill | `security-review/` | セキュリティチェックリスト |
-| skill | `security-scan/` | 脆弱性スキャン |
+| context | `review.md` | レビューモード（品質・セキュリティ重視） |
 
-常駐コンポーネント（未導入なら追加提案）:
+## AskUserQuestion で選択 (multiSelect: true)
 
-| 種別 | コンポーネント | 用途 |
-|------|---------------|------|
-| skill | `coding-standards/` | コーディング規約 |
-| agent | `docs-lookup.md` | ドキュメント検索 |
+**「追加で導入するレビュー関連コンポーネントを選んでください」**
 
-ユーザーに導入先（グローバル / プロジェクト固有）を確認する。
+| 選択肢 | 含まれるもの |
+|--------|-------------|
+| セキュリティスキャン | skill: `security-scan/` |
+| リファクタ・デッドコード除去 | agent: `refactor-cleaner.md` |
+| ドキュメント同期 | agent: `doc-updater.md` |
+| コーディング規約 | skill: `coding-standards/` |
+| ドキュメント検索 | agent: `docs-lookup.md` |
 
-### ステップ4: 導入実行
+技術スタックに応じて追加表示:
+| 条件 | 選択肢 | 含まれるもの |
+|------|--------|-------------|
+| PHP/Laravel | Laravel セキュリティ | skill: `laravel-security/` |
+| Django | Django セキュリティ | skill: `django-security/` |
+| Spring Boot | Spring Boot セキュリティ | skill: `springboot-security/` |
+| Perl | Perl セキュリティ | skill: `perl-security/` |
 
-ユーザーが承認したコンポーネントを ECC リポジトリからコピーする。
+## 配置・報告
 
-- グローバル: `~/.claude/agents/ecc-*.md`, `~/.claude/skills/ecc-*/`
-- プロジェクト固有: `.claude/agents/ecc-*.md`, `.claude/skills/ecc-*/`
-- `ecc-` プレフィックスを付けて名前衝突を防ぐ
-
-### ステップ5: 確認と報告
-
-導入したコンポーネントの一覧を表示する。
-
-## 注意事項
-
-- プロジェクト固有のルール（禁止事項等）が ECC のデフォルトと矛盾する場合はプロジェクト側を優先
-- 不要になったコンポーネントは `/ecc-clean` で削除してコンテキストを軽量に保つ
+スキル → ジャンクション / エージェント・コンテキスト → コピー。既存はスキップ。
+推奨フックレベル `strict` を案内。
