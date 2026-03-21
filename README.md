@@ -18,7 +18,7 @@ Claude Code の開発環境を「育てる」ための3つのスキル。
 
 ```bash
 # クローン
-git clone https://github.com/<your-username>/claude-dev-seeds.git
+git clone https://github.com/jimotokara/claude-dev-seeds.git
 
 # グローバルスキルとしてシンボリックリンク（Windows）
 # 管理者権限 or 開発者モードが必要
