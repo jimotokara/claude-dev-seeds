@@ -1,15 +1,21 @@
 # claude-dev-seeds
 
-Claude Code の開発環境を「育てる」ための3つのスキル。
+Claude Code の開発環境を「育てる」ためのスキル集。
 
 [everything-claude-code (ECC)](https://github.com/affaan-m/everything-claude-code) のスキル・エージェント（116+28個）を、プロジェクトのライフサイクルに合わせて段階的に導入する仕組みです。
 
-## 3つのスキルの役割
+## スキルの役割
 
 ```
 /ecc-setup        初回1度だけ。ECC クローン + グローバルリンク
 /init-memory      プロジェクトごと。CLAUDE.md 等を生成 + ECC 自動利用ルール組み込み
-/ecc-phase        随時。フェーズに応じたスキル・エージェントの追加導入
+/ecc-design       設計フェーズのコンポーネント導入
+/ecc-spec         仕様確定フェーズのコンポーネント導入
+/ecc-implement    実装フェーズのコンポーネント導入
+/ecc-test         テストフェーズのコンポーネント導入
+/ecc-review       レビュー・リリース準備フェーズのコンポーネント導入
+/ecc-deploy       デプロイフェーズのコンポーネント導入
+/ecc-clean        不要フェーズのコンポーネントを削除
 ```
 
 ## インストール
@@ -23,16 +29,22 @@ git clone https://github.com/jimotokara/claude-dev-seeds.git
 # グローバルスキルとしてシンボリックリンク（Windows）
 # 管理者権限 or 開発者モードが必要
 cd %USERPROFILE%\.claude\skills
-mklink /D ecc-setup   "<clone先>\skills\ecc-setup"
-mklink /D ecc-phase   "<clone先>\skills\ecc-phase"
-mklink /D init-memory "<clone先>\skills\init-memory"
+mklink /D ecc-setup     "<clone先>\skills\ecc-setup"
+mklink /D ecc-design    "<clone先>\skills\ecc-design"
+mklink /D ecc-spec      "<clone先>\skills\ecc-spec"
+mklink /D ecc-implement "<clone先>\skills\ecc-implement"
+mklink /D ecc-test      "<clone先>\skills\ecc-test"
+mklink /D ecc-review    "<clone先>\skills\ecc-review"
+mklink /D ecc-deploy    "<clone先>\skills\ecc-deploy"
+mklink /D ecc-clean     "<clone先>\skills\ecc-clean"
+mklink /D init-memory   "<clone先>\skills\init-memory"
 ```
 
 ```bash
 # macOS / Linux
-ln -s <clone先>/skills/ecc-setup   ~/.claude/skills/ecc-setup
-ln -s <clone先>/skills/ecc-phase   ~/.claude/skills/ecc-phase
-ln -s <clone先>/skills/init-memory ~/.claude/skills/init-memory
+for skill in ecc-setup ecc-design ecc-spec ecc-implement ecc-test ecc-review ecc-deploy ecc-clean init-memory; do
+  ln -s <clone先>/skills/$skill ~/.claude/skills/$skill
+done
 ```
 
 ### 2. ECC リポジトリのクローン先を決める
@@ -66,13 +78,22 @@ Claude Code で以下を実行：
 ### フェーズが進んだとき
 
 ```
-/ecc-phase design      # 設計段階: planner, architect
-/ecc-phase spec        # 仕様確定: database-reviewer, backend-patterns
-/ecc-phase implement   # 実装: 言語別パターン, TDD
-/ecc-phase test        # テスト: e2e-runner
-/ecc-phase review      # レビュー: security-reviewer, code-reviewer
-/ecc-phase deploy      # デプロイ: deployment-patterns
+/ecc-design       # 設計段階: planner, architect
+/ecc-spec         # 仕様確定: database-reviewer, backend-patterns
+/ecc-implement    # 実装: 言語別パターン, TDD
+/ecc-test         # テスト: e2e-runner
+/ecc-review       # レビュー: security-reviewer, code-reviewer
+/ecc-deploy       # デプロイ: deployment-patterns
 ```
+
+### フェーズが変わったとき
+
+```bash
+/ecc-clean
+```
+
+現在のフェーズを選択すると、そのフェーズのコンポーネントだけ残して他を削除します。
+コンテキストが軽量に保たれ、AI の応答品質が維持されます。
 
 ## ECC 自動利用ルール
 
@@ -94,13 +115,13 @@ Claude Code はフェーズに関係なく、状況に応じて適切な ECC エ
 
 各スキルファイル内のパスを変更してください：
 - `skills/ecc-setup/skill.md` 内の `$eccPath`
-- `skills/ecc-phase/skill.md` 内の ECC パス参照
+- 各フェーズスキル内の ECC パス参照
 - `skills/init-memory/skill.md` 内の ECC 存在チェックパス
 
 ### バージョンチェックの閾値
 
 デフォルトでは30日で警告、7日で情報表示です。
-`skills/ecc-phase/skill.md` のステップ0で変更できます。
+各フェーズスキルのステップ0で変更できます。
 
 ## 関連記事
 
