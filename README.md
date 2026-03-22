@@ -2,73 +2,45 @@
 
 Claude Code の開発環境を「育てる」ためのスキル集。
 
-[everything-claude-code (ECC)](https://github.com/affaan-m/everything-claude-code) の全コンポーネント（スキル116+、エージェント28、コマンド59、ルール12言語）を、プロジェクトのフェーズに合わせて必要なものだけ導入・切替する仕組みです。
+[everything-claude-code (ECC)](https://github.com/affaan-m/everything-claude-code) の全コンポーネント（スキル116+、エージェント28、コマンド59、ルール12言語）を、必要なときに必要なものだけ導入・切替する仕組みです。
 
 ## 設計思想
 
-- **グローバルにはフェーズ管理コマンドだけ**配置し、コンテキストを軽量に保つ
+- **コマンドは最小限**に。フェーズ別コマンドは持たない
+- `/tools` が状況を読み取り、必要なコンポーネントを対話的に提案・配置・削除
 - 実際のスキル・エージェント・ルールは**プロジェクト単位で `.claude/` に配置**
-- 各コマンド内で **AskUserQuestion による対話的な選択**（言語・サブカテゴリ）
-- ECC 本体のプロファイル / モジュール / コンテキスト / フックレベルと整合
-- 不要になったら `/ecc-clean` で削除 → コンテキストウィンドウを常に最適化
+- ECC に限定しない設計 — 将来的に別のツールソースも統合管理可能
+- 不要になったコンポーネントは `/tools` 実行時に自動検出・削除提案
 
 ## コマンド一覧
 
 ```
-メタ（3）
-  /ecc-setup      ECC リポジトリ管理（クローン・更新）
-  /ecc-status     プロジェクト内の ECC コンポーネント状態表示
-  /ecc-clean      プロジェクト内の ECC コンポーネント削除
-
-フェーズ（9）
-  /ecc-plan       企画・設計（planner, architect, deep-research）
-  /ecc-code       実装（TDD, 言語別パターン, コーディング規約）
-  /ecc-test       テスト（e2e-runner, eval-harness）
-  /ecc-review     レビュー・品質（security, code-reviewer）
-  /ecc-docs       ドキュメント（docs-lookup, codebase-onboarding）
-  /ecc-research   リサーチ（deep-research, exa-search）
-  /ecc-learn      継続的学習（instinct, strategic-compact）
-  /ecc-content    コンテンツ制作（article, media, crosspost）
-  /ecc-ops        オーケストレーション・デプロイ（dmux, agentic patterns）
-
-その他
-  /init-memory    プロジェクト初期化（CLAUDE.md, AGENTS.md 等を生成）
+/tools          スマートディスパッチャー（メインコマンド）
+                状況読み取り → フェーズ提案 → コンポーネント選択 → 配置 → 不要分削除
+/ecc-setup      ECC リポジトリのクローン・更新
+/init-memory    プロジェクト初期化（CLAUDE.md, AGENTS.md 等を生成）
 ```
 
 ## アーキテクチャ
 
 ```
 S:\ECC\everything-claude-code/     ← ECC 本体リポジトリ（倉庫）
-  manifests/install-modules.json      モジュール定義
-  manifests/install-profiles.json     プロファイル定義（core/developer/security/research/full）
-  contexts/*.md                       コンテキストモード（dev/review/research）
-  agents/, skills/, commands/, rules/ 実コンポーネント
+  skills/                             116 スキル
+  agents/                             28 エージェント
+  contexts/                           コンテキストモード
+  rules/                              ルール（12言語）
 
-~/.claude/skills/                  ← フェーズ管理コマンドのみ（12個）
-  ecc-setup/, ecc-status/, ecc-clean/
-  ecc-plan/, ecc-code/, ecc-test/, ecc-review/
-  ecc-docs/, ecc-research/, ecc-learn/, ecc-content/, ecc-ops/
+~/.claude/skills/                  ← グローバルスキル（3個のみ）
+  tools/                              スマートディスパッチャー
+  ecc-setup/                          リポジトリ管理
+  init-memory/                        プロジェクト初期化
 
-プロジェクト/.claude/              ← 各フェーズコマンドが配置・削除
+プロジェクト/.claude/              ← /tools が配置・削除
   agents/ecc-*.md                     (コピー)
-  skills/ecc-*/                       (ジャンクション or コピー)
-  rules/*.md                          (コピー)
+  skills/ecc-*/                       (ジャンクション)
+  rules/ecc-*                         (コピー)
   contexts/ecc-*.md                   (コピー)
 ```
-
-### ECC 本体との対応
-
-| コマンド | ECC プロファイル | コンテキスト | フックレベル |
-|---|---|---|---|
-| ecc-plan | core + research-apis | research.md | minimal |
-| ecc-code | developer + 言語別 | dev.md | standard |
-| ecc-test | workflow-quality | dev.md | standard |
-| ecc-review | core + security | review.md | strict |
-| ecc-docs | core | research.md | minimal |
-| ecc-research | research | research.md | minimal |
-| ecc-learn | workflow-quality(学習系) | — | standard |
-| ecc-content | business-content + social + media | — | minimal |
-| ecc-ops | orchestration + devops + agentic | dev.md | standard |
 
 ## インストール
 
@@ -82,12 +54,12 @@ git clone https://github.com/jimotokara/claude-dev-seeds.git
 # Windows（PowerShell）
 $src = "<clone先>\skills"
 $dst = "$env:USERPROFILE\.claude\skills"
-Get-ChildItem "$src\ecc-*", "$src\init-memory" -Directory | ForEach-Object {
+Get-ChildItem "$src\tools", "$src\ecc-setup", "$src\init-memory" -Directory | ForEach-Object {
   Copy-Item $_.FullName "$dst\$($_.Name)" -Recurse -Force
 }
 
 # macOS / Linux
-for skill in ecc-setup ecc-status ecc-clean ecc-plan ecc-code ecc-test ecc-review ecc-docs ecc-research ecc-learn ecc-content ecc-ops init-memory; do
+for skill in tools ecc-setup init-memory; do
   cp -r <clone先>/skills/$skill ~/.claude/skills/$skill
 done
 ```
@@ -113,37 +85,24 @@ Claude Code で以下を実行：
 
 対話的にプロジェクト情報を収集し、AGENTS.md, CLAUDE.md, .agent/, .spec/ 等を自動生成します。
 
-### フェーズに応じたコンポーネント導入
+### ツールの導入・切替
 
-```bash
-/ecc-plan       # 企画段階: planner, architect, deep-research
-/ecc-code       # 実装段階: 言語自動検出 → 対話で選択
-/ecc-test       # テスト段階: e2e-runner, eval-harness
-/ecc-review     # レビュー: security-reviewer, code-reviewer
+```
+/tools
 ```
 
-各コマンドは技術スタックを自動検出し、AskUserQuestion で追加コンポーネントを対話的に選択できます。
+1. HANDOFF / MEMORY / TODO / チャット文脈から現状を把握
+2. 次にやるべきフェーズを 2-3 個提案（AskUserQuestion）
+3. 選んだフェーズに応じて ECC カタログから候補を特定
+4. 導入するコンポーネントを提案（AskUserQuestion, multiSelect）
+5. 選んだものを配置（スキル→ジャンクション、エージェント等→コピー）
+6. 以前のフェーズで入れた不要なコンポーネントを検出・削除提案
 
-### フェーズの切り替え
+### ECC リポジトリの更新
 
-```bash
-/ecc-clean      # 不要コンポーネントを削除（全削除 / フェーズ指定 / 個別選択）
-/ecc-code       # 新しいフェーズのコンポーネントを導入
 ```
-
-### 状態確認
-
-```bash
-/ecc-status     # 現在のプロジェクト内 ECC コンポーネント一覧
+/ecc-setup
 ```
-
-## ECC 本体への貢献
-
-このプロジェクトの「フェーズ別コンポーネント管理」は、ECC 本体の以下の Issue に関連しています：
-
-- [#657](https://github.com/affaan-m/everything-claude-code/issues/657) — token optimization, lazy-load skills, context scoping
-- [#421](https://github.com/affaan-m/everything-claude-code/issues/421) — install-state, uninstall/doctor/repair lifecycle
-- [#423](https://github.com/affaan-m/everything-claude-code/issues/423) — manifest-driven selective install profiles
 
 ## カスタマイズ
 
@@ -151,10 +110,9 @@ Claude Code で以下を実行：
 
 各スキルファイル内の `S:\ECC\everything-claude-code` パスを変更してください。
 
-### バージョンチェックの閾値
+### ツールソースの追加
 
-デフォルトでは 30 日で警告、7 日で情報表示です。
-各フェーズスキルの鮮度チェック部分で変更できます。
+`/tools` の skill.md 内「ツールソース」テーブルに新しいソースを追加することで、ECC 以外のスキルリポジトリも統合管理できます。
 
 ## 関連記事
 
